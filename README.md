@@ -72,10 +72,9 @@ En la segunda fase pasamos todo a código para SQLite. En el script incluimos:
 2. Restricciones de seguridad (`CHECK`) para que nadie pueda registrar, por error, un producto con precio negativo.
 3. El uso de `ON DELETE CASCADE` para que no queden datos basura si un cliente es eliminado.
 
-**avance (app.py):**
+###  avance (app.py)
 Quería comprobar si mi diseño funcionaba en la práctica y no solo en papel. Por eso, armé un script rápido en Python que se conecta a SQLite, ejecuta mi archivo SQL desde cero, le mete unos datos de prueba y me tira un reporte real de ganancias en la terminal. Así compruebo que las consultas y las Vistas responden bien.
----
 
-##  Decisiones de Diseño en el trabajo
-Durante el análisis del negocio, noté un detalle operativo: **no se le pide nombre ni teléfono a un cliente que solo compra un cable barato**. 
+### Decisiones de Diseño en el Trabajo
+Durante el análisis del negocio, noté un detalle operativo vital: **no se le pide nombre ni teléfono a un cliente que solo compra un accesorio barato**. 
 Para que la base de datos sea rápida y no retrase las ventas de mostrador, implementé la figura del `id_cliente = 0` (Cliente Ocasional). De esta manera, el sistema permite registrar ventas menores al instante, pero mantiene la exigencia de registrar datos reales obligatorios cuando el cliente deja un equipo caro en el módulo de **Servicio Técnico**.
