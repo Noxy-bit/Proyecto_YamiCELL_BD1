@@ -11,6 +11,9 @@ DROP TABLE IF EXISTS VENTA;
 DROP TABLE IF EXISTS PRODUCTO;
 DROP TABLE IF EXISTS PUESTO;
 DROP TABLE IF EXISTS CLIENTE;
+DROP VIEW IF EXISTS V_STOCK_CRITICO;
+DROP VIEW IF EXISTS V_INGRESOS_PUESTOS;
+DROP VIEW IF EXISTS V_HISTORIAL_REPARACIONES;
 
 -- ====================================================
 -- DDL: CREACIÓN DE TABLAS
@@ -86,14 +89,8 @@ CREATE TABLE CELULAR (
 
 -- Insertar los puestos físicos (Pasillo Tarija y Américas)
 INSERT INTO PUESTO (id_puesto, nombre_puesto, sector) VALUES 
-(98, 'Puesto Principal Tarija', 'Pasillo Tarija'),
-(121, 'Sucursal Américas', 'Pasillo Américas');
-
--- Insertar clientes de prueba
-INSERT INTO CLIENTE (id_cliente, nombre_completo, telefono) VALUES 
-(1, 'Carlos Mendoza', '77889900'),
-(2, 'Maria Fernanda Lopez', '71234567'),
-(3, 'Juan Perez', '76543210');
+(98, 'Pasillo Tarija', 'Pasillo Tarija'),
+(121, 'Pasillo Las Américas', 'Pasillo Américas');
 
 -- Insertar el inventario (Productos generales y de vitrina)
 INSERT INTO PRODUCTO (id_producto, nombre_producto, categoria, precio, stock) VALUES 
@@ -103,14 +100,21 @@ INSERT INTO PRODUCTO (id_producto, nombre_producto, categoria, precio, stock) VA
 (104, 'Samsung Galaxy A54', 'Celulares', 2100.00, 2),
 (105, 'iPhone 11 (Usado)', 'Celulares', 1800.00, 1);
 
+-- Insertar clientes de prueba
+INSERT INTO CLIENTE (id_cliente, nombre_completo, telefono) VALUES 
+(0, 'Cliente Ocasional (Venta Rápida)', 'S/N'), -- El cliente genérico para cosas baratas
+(1, 'Carlos Mendoza', '77889900'),
+(2, 'Maria Fernanda Lopez', '71234567'),
+(3, 'Juan Perez', '76543210');
+
 -- Registrar los IMEI de los celulares (Solo los id_producto 104 y 105)
 INSERT INTO CELULAR (imei, estado_fisico, estado_red, id_producto) VALUES 
 ('354123098765432', 'Nuevo en caja', 'Liberado', 104),
 ('358765432109876', 'Usado - Pantalla rayada', 'Entel', 105);
 
--- Registrar una venta en el Puesto 98 (El cliente 1 compra un cable)
+-- Registrar una venta en el Puesto 98 (Un cliente ocasional compra un cable)
 INSERT INTO VENTA (id_venta, fecha, total, id_cliente, id_puesto) VALUES 
-(1001, '2026-09-25', 25.00, 1, 98);
+(1001, '2026-09-25', 25.00, 0, 98); -- Usamos el id_cliente 0
 
 -- Detalle de esa venta (1 cable)
 INSERT INTO DETALLE_VENTA (id_detalle, cantidad, subtotal, id_venta, id_producto) VALUES 
