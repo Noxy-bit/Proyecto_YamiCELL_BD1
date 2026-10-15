@@ -48,10 +48,10 @@ Para pasar el dibujo a una base de datos real, usamos Llaves Primarias (PK) para
 Aplicación de las 3 Formas Normales (Normalización)
 Para garantizar que la base de datos sea eficiente, no tenga datos duplicados y evite anomalías al insertar o borrar información, el modelo del sistema fue sometido rigurosamente a las tres formas normales:
 
-1. Primera Forma Normal (1FN): Datos Atómicos
+**1. Primera Forma Normal (1FN): Datos Atómicos**
 Regla: Cada columna debe contener un valor atómico (indivisible) y no se permiten listas o grupos de valores repetidos. Cada fila debe ser única mediante una Llave Primaria (PK).
 
-Aplicación en YamiCELL:
+Aplicación:
 En la tabla CLIENTE, el atributo telefono almacena un único número de contacto. No se permiten listas de teléfonos separadas por comas.
 
 tabla:
@@ -60,10 +60,10 @@ tabla:
 | 1 | Juan Pérez | 77123456 |
 | 2 | María Gómez | 79876543 |
 
-2. Segunda Forma Normal (2FN): Dependencia Funcional Completa
+**2. Segunda Forma Normal (2FN): Dependencia Funcional Completa**
 Regla: Debe cumplir con la 1FN y todos los atributos que no son clave deben depender completamente de la Llave Primaria completa (evitando dependencias parciales).
 
-Aplicación en YamiCELL:
+Aplicación:
 Dado que utilizamos Llaves Primarias artificiales e independientes (id_producto, id_cliente), garantizamos la 2FN de forma directa. Por ejemplo, en la tabla PRODUCTO, el nombre_producto, el precio y el stock dependen única y exclusivamente del código del producto (id_producto), sin depender de otros campos.
 
 tabla:
@@ -71,7 +71,7 @@ tabla:
 | :--- | :--- | :--- | :--- | :--- |
 | 101 | Cable USB Tipo C | Accesorios | 15.00 | 20 |
 
-3. Tercera Forma Normal (3FN): Cero Dependencia Transitiva
+**3. Tercera Forma Normal (3FN): Cero Dependencia Transitiva**
 Regla: Debe cumplir con la 2FN y ningún atributo que no sea clave debe depender de otro atributo que tampoco sea clave (es decir, los datos no clave no deben transitar a través de otros campos).
 
 Aplicación en YamiCELL: Este fue el paso más crítico del diseño para evitar redundancias y anomalías:
