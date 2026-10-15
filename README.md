@@ -45,24 +45,55 @@ Para pasar el dibujo a una base de datos real, usamos Llaves Primarias (PK) para
 * `DETALLE_VENTA(id_detalle {PK}, cantidad, subtotal, id_venta {FK}, id_producto {FK})`
 * `SERVICIO_TECNICO(id_servicio {PK}, falla_reportada, costo, id_cliente {FK}, id_puesto {FK})`
 
-### Aplicación de las 3 Formas Normales (Normalización)
-Para garantizar que la base de datos sea eficiente, no tenga datos duplicados y evite anomalías al insertar o borrar información, el modelo fue sometido a las tres formas normales:
+Aplicación de las 3 Formas Normales (Normalización)
+Para garantizar que la base de datos sea eficiente, no tenga datos duplicados y evite anomalías al insertar o borrar información, el modelo del sistema fue sometido rigurosamente a las tres formas normales:
 
-**1. Primera Forma Normal (1FN): Datos Atómicos**
-* **Regla:** Ninguna columna debe contener múltiples valores o listas.
-* **Aplicación en YamiCELL:** En la tabla `CLIENTE`, el atributo `telefono` guarda un único número de contacto. No permitimos listas separadas por comas. Además, cada registro en todas las tablas es único gracias a su respectiva Llave Primaria (PK).
+1. Primera Forma Normal (1FN): Datos Atómicos
+Regla: Cada columna debe contener un valor atómico (indivisible) y no se permiten listas o grupos de valores repetidos. Cada fila debe ser única mediante una Llave Primaria (PK).
 
-**2. Segunda Forma Normal (2FN): Dependencia Funcional Completa**
-* **Regla:** Cumplir la 1FN y que todos los atributos dependan completamente de la Llave Primaria.
-* **Aplicación en YamiCELL:** Como utilizamos "Llaves Primarias Artificiales" (IDs únicos como `id_producto`, `id_cliente`), garantizamos la 2FN automáticamente. Por ejemplo, en la tabla `PRODUCTO`, el `nombre_producto` y el `precio` dependen única y exclusivamente del `id_producto`. 
+Aplicación en YamiCELL:
+En la tabla CLIENTE, el atributo telefono almacena un único número de contacto. No se permiten listas de teléfonos separadas por comas.
 
-**3. Tercera Forma Normal (3FN): Cero Dependencia Transitiva**
-* **Regla:** Cumplir la 2FN y que los atributos no clave NO dependan de otros atributos no clave.
-* **Aplicación en YamiCELL:** Este fue el paso más crítico del diseño.
-  * **Separación de Ventas:** En lugar de anotar todo en una sola tabla, dividimos la transacción en `VENTA` (Cabecera: Fecha, Total, Cliente, Puesto) y `DETALLE_VENTA` (Carrito: Cantidad, Subtotal, Producto). Así evitamos repetir los datos del cliente y del puesto 5 veces si la persona compra 5 accesorios distintos.
-  * **Separación del Inventario:** Separamos `CELULAR` de `PRODUCTO`. Si metíamos el atributo `IMEI` en la tabla general de productos, los cables y fundas tendrían ese espacio en blanco (NULL). Al separarlos, cada atributo depende de su propia entidad.
+tabla:
+| id_cliente (PK) | nombre_completo | telefono |
+| :--- | :--- | :--- |
+| 1 | Juan Pérez | 77123456 |
+| 2 | María Gómez | 79876543 |
 
----
+2. Segunda Forma Normal (2FN): Dependencia Funcional Completa
+Regla: Debe cumplir con la 1FN y todos los atributos que no son clave deben depender completamente de la Llave Primaria completa (evitando dependencias parciales).
+
+Aplicación en YamiCELL:
+Dado que utilizamos Llaves Primarias artificiales e independientes (id_producto, id_cliente), garantizamos la 2FN de forma directa. Por ejemplo, en la tabla PRODUCTO, el nombre_producto, el precio y el stock dependen única y exclusivamente del código del producto (id_producto), sin depender de otros campos.
+
+tabla:
+| id_producto (PK) | nombre_producto | categoria | precio | stock |
+| :--- | :--- | :--- | :--- | :--- |
+| 101 | Cable USB Tipo C | Accesorios | 15.00 | 20 |
+
+3. Tercera Forma Normal (3FN): Cero Dependencia Transitiva
+Regla: Debe cumplir con la 2FN y ningún atributo que no sea clave debe depender de otro atributo que tampoco sea clave (es decir, los datos no clave no deben transitar a través de otros campos).
+
+Aplicación en YamiCELL: Este fue el paso más crítico del diseño para evitar redundancias y anomalías:
+
+Separación de Ventas (Cabecera y Detalle): En lugar de repetir los datos del cliente, la fecha o el puesto cada vez que alguien compra varios artículos, dividimos la transacción en dos tablas: VENTA (Cabecera) y DETALLE_VENTA (Carrito).
+
+Ejemplo de la separación en 3FN:
+
+Tabla VENTA (Cabecera general):
+| id_venta (PK) | fecha | total | id_cliente (FK) | id_puesto (FK) |
+| :--- | :--- | :--- | :--- | :--- |
+| 50 | 2026-10-15 | 45.00 | 0 (Ocasional) | 1 (Pasillo Tarija) |
+
+Tabla DETALLE_VENTA (Renglones del carrito asociados a la venta anterior):
+| id_detalle (PK) | cantidad | subtotal | id_venta (FK) | id_producto (FK) |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 2 | 30.00 | 50 | 101 (Cable) |
+| 2 | 1 | 15.00 | 50 | 105 (Funda) |
+
+Separación del Inventario (PRODUCTO y CELULAR): Separamos los teléfonos de la tabla general para evitar campos vacíos (NULL) en los accesorios. Cada entidad maneja sus propios atributos específicos sin depender de datos ajenos.
+
+
 
 ## Fase 2: Implementación
 **Archivo:** `script_yamicell.sql`
