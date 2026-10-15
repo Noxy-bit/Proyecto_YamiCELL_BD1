@@ -53,7 +53,7 @@ CREATE TABLE VENTA (
     FOREIGN KEY (id_puesto) REFERENCES PUESTO(id_puesto) ON DELETE CASCADE
 );
 
--- 5. TABLA SERVICIO_TECNICO (Los arreglos del puesto 99)
+-- 5. TABLA SERVICIO_TECNICO (Los arreglos del puesto 98)
 CREATE TABLE SERVICIO_TECNICO (
     id_servicio INT PRIMARY KEY,
     falla_reportada VARCHAR(255) NOT NULL,
@@ -200,3 +200,21 @@ CREATE VIEW V_HISTORIAL_REPARACIONES AS
 SELECT c.nombre_completo, s.falla_reportada, s.costo
 FROM CLIENTE c
 JOIN SERVICIO_TECNICO s ON c.id_cliente = s.id_cliente;
+
+-- ====================================================
+-- ACTUALIZACIÓN UNIDAD 4: ALTER TABLE Y CREATE INDEX
+-- ====================================================
+
+-- 1. ALTER TABLE (Modificar estructura existente sin afectar datos previos)
+-- Agregamos la columna metodo_pago a VENTA (respaldado por la Pregunta 21 de la entrevista)
+ALTER TABLE VENTA ADD COLUMN metodo_pago VARCHAR(20) DEFAULT 'Efectivo';
+
+-- 2. CREATE INDEX (Mejorar el rendimiento de las búsquedas)
+-- Índice simple: acelera la búsqueda de productos por su nombre en mostrador
+CREATE INDEX idx_producto_nombre ON PRODUCTO(nombre_producto);
+
+-- Índice único: garantiza a nivel de índice que no se repita el teléfono de un cliente registrado
+CREATE UNIQUE INDEX idx_cliente_telefono ON CLIENTE(telefono);
+
+-- Índice compuesto: optimiza la búsqueda de ventas filtrando por puesto y fecha
+CREATE INDEX idx_venta_puesto_fecha ON VENTA(id_puesto, fecha);
