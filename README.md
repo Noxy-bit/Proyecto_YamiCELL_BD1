@@ -74,7 +74,7 @@ tabla:
 **3. Tercera Forma Normal (3FN): Cero Dependencia Transitiva**
 Regla: Debe cumplir con la 2FN y ningún atributo que no sea clave debe depender de otro atributo que tampoco sea clave (es decir, los datos no clave no deben transitar a través de otros campos).
 
-Aplicación en YamiCELL: Este fue el paso más crítico del diseño para evitar redundancias y anomalías:
+Aplicación: Este fue el paso más crítico del diseño para evitar redundancias y anomalías:
 
 Separación de Ventas (Cabecera y Detalle): En lugar de repetir los datos del cliente, la fecha o el puesto cada vez que alguien compra varios artículos, dividimos la transacción en dos tablas: VENTA (Cabecera) y DETALLE_VENTA (Carrito).
 
