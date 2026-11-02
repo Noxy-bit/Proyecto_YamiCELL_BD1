@@ -1,46 +1,58 @@
 import sqlite3
 import os
 
-def ejecutar_proyecto_yamicell():
-    print("=========================================")
-    print(" INICIANDO SISTEMA YAMICELL (SQLITE) ")
-    print("=========================================")
+DB_NAME = "yamicell_database.db"
+SQL_FILE = "fase2/script_yamicell.sql"
 
-    # 1. Conectarnos a una base de datos local (si no existe, la crea)
-    conexion = sqlite3.connect("yamicell_database.db")
-    cursor = conexion.cursor()
+# Eliminar base de datos anterior para pruebas limpias en vivo
+if os.path.exists(DB_NAME):
+    os.remove(DB_NAME)
 
-    # 2. Leer el archivo SQL de la Fase 2
-    ruta_script = os.path.join("fase2", "script_yamicell.sql")
-    
+conexion = sqlite3.connect(DB_NAME)
+cursor = conexion.cursor()
+cursor.execute("PRAGMA foreign_keys = ON;")
+
+# Leer y ejecutar el script SQL completo de YamiCELL
+if os.path.exists(SQL_FILE):
+    with open(SQL_FILE, "r", encoding="utf-8") as f:
+        cursor.executescript(f.read())
+    conexion.commit()
+    print("====================================================")
+    print(" SISTEMA YAMICELL - BASE DE DATOS INICIADA CON ÉXITO")
+    print("====================================================")
+else:
+    print(f"[ERROR] No se encontró el archivo SQL en la ruta: {SQL_FILE}")
+
+def mostrar_tabla_en_caja(titulo, query):
+    print(f"\n📊 {titulo}")
     try:
-        with open(ruta_script, 'r', encoding='utf-8') as archivo_sql:
-            script_completo = archivo_sql.read()
-            
-            # 3. Ejecutar todo el código SQL
-            cursor.executescript(script_completo)
-            print("[OK] Tablas creadas con éxito.")
-            print("[OK] Datos de prueba insertados.")
-            print("[OK] Vistas generadas correctamente.\n")
+        cursor.execute(query)
+        filas = cursor.fetchall()
+        columnas = [desc[0] for desc in cursor.description]
+        
+        if not filas:
+            print("(La tabla no contiene registros actualmente)")
+            return
 
-            # 4. Probar que funciona haciendo una consulta real
-            print("REPORTE RÁPIDO: PUESTOS Y SUS VENTAS TOTALES")
-            print("-----------------------------------------")
-            cursor.execute("SELECT * FROM V_INGRESOS_PUESTOS;")
-            resultados = cursor.fetchall()
-            
-            for fila in resultados:
-                # Aquí aplicamos la corrección a Bolivianos (Bs.)
-                print(f"- Puesto: {fila[0]} | Total Generado: Bs. {fila[1]}")
-            
+        # Calcular anchos dinámicos de columnas para formatear la caja
+        anchos = [max(len(str(col)), max((len(str(f[i])) for f in filas), default=0)) for i, col in enumerate(columnas)]
+        borde = "+-" + "-+-".join("-" * a for a in anchos) + "-+"
+        
+        print(borde)
+        print("| " + " | ".join(str(col).ljust(anchos[i]) for i, col in enumerate(columnas)) + " |")
+        print(borde)
+        for fila in filas:
+            print("| " + " | ".join(str(val).ljust(anchos[i]) for i, val in enumerate(fila)) + " |")
+        print(borde)
     except Exception as e:
-        print(f"[ERROR] Ocurrió un fallo al ejecutar el script: {e}")
-    finally:
-        conexion.close()
-        print("\n=========================================")
-        print(" EJECUCIÓN FINALIZADA CORRECTAMENTE ")
-        print("=========================================")
+        print(f"[Error al consultar]: {e}")
 
-# Arrancar el programa
-if __name__ == "__main__":
-    ejecutar_proyecto_yamicell()
+# Mostrar las tablas principales y las vistas solicitadas en la Unidad 4 frente al Ing. Peinado
+mostrar_tabla_en_caja("TABLA MAESTRA: PUESTOS FÍSICOS", "SELECT * FROM PUESTO;")
+mostrar_tabla_en_caja("TABLA MAESTRA: PRODUCTOS Y VITRINA", "SELECT * FROM PRODUCTO;")
+mostrar_tabla_en_caja("TABLA DEPENDIENTE: CELULARES (Especialización 1 a 0..1)", "SELECT * FROM CELULAR;")
+mostrar_tabla_en_caja("TRANSACCIONAL: VENTAS REGISTRADAS", "SELECT * FROM VENTA;")
+mostrar_tabla_en_caja("REPORTE UNIDAD 4: VISTA DE INGRESOS POR PUESTO", "SELECT * FROM V_INGRESOS_PUESTOS;")
+mostrar_tabla_en_caja("REPORTE UNIDAD 4: PRODUCTOS CON STOCK CRÍTICO (<5)", "SELECT * FROM V_STOCK_CRITICO;")
+
+conexion.close()
