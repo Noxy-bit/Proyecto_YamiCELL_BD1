@@ -1,111 +1,108 @@
-# Proyecto Final · INF-312 Base de Datos I
+# Sistema de Gestión Comercial y Servicio Técnico · YamiCELL
 
-**Universidad Autónoma Gabriel René Moreno**
-**Materia:** Base de Datos I (INF-312)
-**Docente:** Ing. Juan Carlos Peinado
-**Estudiante:** Oscar Alejandro Nava Orihuela
-**Caso de Estudio:** Sistema de Gestión Comercial Mixto (Tienda "YamiCELL")
-
----
-
-## Planteamiento del Problema
-Este proyecto nace del levantamiento de requerimientos y entrevistas realizadas al local **YamiCELL**. Este negocio tiene la particularidad de manejar dos rubros totalmente distintos en un mismo espacio físico:
-1. Un inventario masivo de productos variados (cables, accesorios, maquillaje, etc.).
-2. Un taller de servicio técnico para reparación de celulares.
-
-**El problema detectado:** 
-Actualmente todo se registra de forma manual en cuadernos. Esto genera mucho desorden porque es difícil cruzar la información para saber cuánto dinero ingresó por vender accesorios y cuánto ingresó por mano de obra de reparaciones. Además, al vender equipos caros, el registro manual complica llevar un control formal de los IMEI para el tema de garantías.
-
-## Solución y Estructura
-Se diseñó una base de datos relacional para digitalizar el negocio. El proyecto se dividió en dos fases de desarrollo:
-
-| Fase | Descripción de la entrega |
-|---|---|
-| **Fase 1** | Diseño conceptual (Draw.io) y modelado lógico. |
-| **Fase 2** | Implementación del código SQL y consultas. |
+| Datos Académicos | Detalle |
+| :--- | :--- |
+| **Universidad** | Universidad Autónoma Gabriel René Moreno (UAGRM) - FICCT |
+| **Materia** | Base de Datos I (INF-312) |
+| **Docente** | Ing. Juan Carlos Peinado |
+| **Estudiante** | Oscar Alejandro Nava Orihuela |
+| **Caso de Estudio** | Tienda Comercial Mixta y Taller Técnico "YamiCELL" (Puestos 98 y 121) |
 
 ---
 
-##  Fase 1: Diseño y Reglas de Negocio
-**Archivo:** `Modelo_Conceptual_YamiCELL.drawio`
+## 1. Planteamiento del Problema
+Este proyecto nace del levantamiento de requerimientos y entrevistas realizadas al negocio **YamiCELL**, el cual opera en dos sucursales físicas (**Puesto 98 en Pasillo Tarija** y **Puesto 121 en Pasillo Las Américas**) combinando dos rubros distintos en un mismo espacio:
+1. **Venta minorista de alta rotación:** Cables, cargadores, fundas, artículos electrónicos, cosmética (maquillaje) y teléfonos celulares (nuevos y semi-nuevos).
+2. **Taller de servicio técnico:** Diagnóstico y reparación especializada de equipos móviles.
 
-Durante el análisis del negocio, definimos cómo se iban a organizar los datos:
-* **Catálogo General:** Todo lo que se vende (fundas, rímel, cargadores) va a una sola gran tabla de `PRODUCTO`. 
-* **Control de Celulares:** Como los celulares son equipos caros que necesitan garantía, creamos una tabla especial `CELULAR` que se conecta al catálogo. Esto obliga al sistema a registrar el código IMEI único de cada teléfono.
-* **Servicio Técnico:** Las reparaciones se manejan en su propia tabla porque requieren datos diferentes a una venta normal (qué falla reportó el cliente, costo del arreglo, etc.).
+**Problema detectado:**  
+El registro diario se llevaba de forma manual en cuadernos y mensajes de WhatsApp. Esto impedía cruzar información con exactitud para diferenciar los ingresos por venta de accesorios frente a los ingresos por mano de obra técnica, generaba descuadres de caja al reponer mercadería y dificultaba el rastreo formal del código **IMEI** en equipos con garantía.
 
-### Mapeo Relacional (Las Tablas)
-Para pasar el dibujo a una base de datos real, usamos Llaves Primarias (PK) para darle un ID único a cada registro, y Llaves Foráneas (FK) para conectar las tablas. Por ejemplo, en vez de escribir todo el nombre del cliente cada vez que compra, solo guardamos su `id_cliente` en la tabla de ventas.
+---
 
+## 2. Arquitectura y Fases del Proyecto
+
+| Fase | Entregable Principal | Descripción |
+| :--- | :--- | :--- |
+| **Fase 1** | `fase1/Entrevista.md` y `Modelo_Conceptual_YamiCELL.drawio` | Levantamiento de requerimientos, reglas de negocio, diseño conceptual y normalización (1FN, 2FN, 3FN). |
+| **Fase 2** | `fase2/script_yamicell.sql` y `app.py` | Implementación física en SQL (DDL, DML, restricciones `CHECK`, transacciones ACID, Vistas y Consultas Avanzadas) junto con el auditor en consola y panel web en PHP. |
+
+---
+
+## 3. Fase 1: Diseño Relacional y Reglas de Negocio
+
+* **Catálogo General (`PRODUCTO`):** Centraliza todos los artículos comerciales validando mediante restricciones `CHECK` que ni el precio ni el stock puedan ser negativos.
+* **Especialización de Celulares (`1 a 0..1` en `CELULAR`):** Debido a que los accesorios y cosméticos no poseen IMEI, los teléfonos se separan en la tabla `CELULAR` vinculada mediante `id_producto {FK, UNIQUE}`, registrando `imei`, `estado_fisico` y `estado_red` sin generar valores `NULL` en el resto del inventario.
+* **Modalidad de Venta Rápida (`id_cliente = 0`):** En ventas de mostrador de bajo costo no se exige nombre ni teléfono al comprador para no demorar la atención; se asigna el registro maestro `id_cliente = 0` (*Cliente Ocasional*), exigiendo datos nominales completos para ventas de celulares o recepciones en **Servicio Técnico**.
+
+### Mapeo Relacional Definitivo
 * `CLIENTE(id_cliente {PK}, nombre_completo, telefono)`
 * `PUESTO(id_puesto {PK}, nombre_puesto, sector)`
 * `PRODUCTO(id_producto {PK}, nombre_producto, categoria, precio, stock)`
-* `CELULAR(imei {PK}, estado_fisico, estado_red, id_producto {FK})`
-* `VENTA(id_venta {PK}, fecha, total, id_cliente {FK}, id_puesto {FK})`
+* `CELULAR(imei {PK}, estado_fisico, estado_red, id_producto {FK, UNIQUE})`
+* `VENTA(id_venta {PK}, fecha, metodo_pago, total, id_cliente {FK}, id_puesto {FK})`
 * `DETALLE_VENTA(id_detalle {PK}, cantidad, subtotal, id_venta {FK}, id_producto {FK})`
-* `SERVICIO_TECNICO(id_servicio {PK}, falla_reportada, costo, id_cliente {FK}, id_puesto {FK})`
+* `SERVICIO_TECNICO(id_servicio {PK}, fecha_ingreso, falla_reportada, costo, estado, id_cliente {FK}, id_puesto {FK})`
 
-Aplicación de las 3 Formas Normales (Normalización)
-Para garantizar que la base de datos sea eficiente, no tenga datos duplicados y evite anomalías al insertar o borrar información, el modelo del sistema fue sometido rigurosamente a las tres formas normales:
+---
 
-**1. Primera Forma Normal (1FN): Datos Atómicos**
-Regla: Cada columna debe contener un valor atómico (indivisible) y no se permiten listas o grupos de valores repetidos. Cada fila debe ser única mediante una Llave Primaria (PK).
+## 4. Aplicación de las 3 Formas Normales (Normalización)
 
-Aplicación:
-En la tabla CLIENTE, el atributo telefono almacena un único número de contacto. No se permiten listas de teléfonos separadas por comas.
+### 4.1 Primera Forma Normal (1FN): Datos Atómicos
+* **Regla:** Cada atributo debe contener un valor atómico (indivisible), sin grupos repetidos, identificando cada tupla mediante una Llave Primaria (`PK`).
+* **Aplicación:** En `CLIENTE`, el campo `telefono` almacena un único número de contacto principal por registro.
 
-tabla:
 | id_cliente (PK) | nombre_completo | telefono |
 | :--- | :--- | :--- |
-| 1 | Juan Pérez | 77123456 |
-| 2 | María Gómez | 79876543 |
+| 0 | Cliente Ocasional (Venta Rápida) | S/N |
+| 1 | Carlos Mendoza | 77889900 |
+| 2 | María Fernanda López | 71234567 |
 
-**2. Segunda Forma Normal (2FN): Dependencia Funcional Completa**
-Regla: Debe cumplir con la 1FN y todos los atributos que no son clave deben depender completamente de la Llave Primaria completa (evitando dependencias parciales).
+### 4.2 Segunda Forma Normal (2FN): Dependencia Funcional Completa
+* **Regla:** Cumplir con 1FN y garantizar que todo atributo no clave dependa íntegramente de la Llave Primaria, sin dependencias parciales.
+* **Aplicación:** En `PRODUCTO`, tanto `nombre_producto`, `categoria`, `precio` como `stock` dependen de forma exclusiva de `id_producto`.
 
-Aplicación:
-Dado que utilizamos Llaves Primarias artificiales e independientes (id_producto, id_cliente), garantizamos la 2FN de forma directa. Por ejemplo, en la tabla PRODUCTO, el nombre_producto, el precio y el stock dependen única y exclusivamente del código del producto (id_producto), sin depender de otros campos.
-
-tabla:
 | id_producto (PK) | nombre_producto | categoria | precio | stock |
 | :--- | :--- | :--- | :--- | :--- |
-| 101 | Cable USB Tipo C | Accesorios | 15.00 | 20 |
+| 101 | Cable Tipo C Carga Rápida 25W | Accesorios | 25.00 | 48 |
+| 104 | Samsung Galaxy A54 5G | Celulares | 2100.00 | 2 |
 
-**3. Tercera Forma Normal (3FN): Cero Dependencia Transitiva**
-Regla: Debe cumplir con la 2FN y ningún atributo que no sea clave debe depender de otro atributo que tampoco sea clave (es decir, los datos no clave no deben transitar a través de otros campos).
+### 4.3 Tercera Forma Normal (3FN): Cero Dependencia Transitiva
+* **Regla:** Cumplir con 2FN y asegurar que ningún atributo no clave dependa transitivamente de otro atributo no clave.
+* **Aplicación:** Se desacopló la facturación en cabecera (`VENTA`) y renglones (`DETALLE_VENTA`), y se aisló la ficha técnica del teléfono en `CELULAR`.
 
-Aplicación: Este fue el paso más crítico del diseño para evitar redundancias y anomalías:
+**Tabla `VENTA` (Cabecera del recibo):**
 
-Separación de Ventas (Cabecera y Detalle): En lugar de repetir los datos del cliente, la fecha o el puesto cada vez que alguien compra varios artículos, dividimos la transacción en dos tablas: VENTA (Cabecera) y DETALLE_VENTA (Carrito).
+| id_venta (PK) | fecha | metodo_pago | total | id_cliente (FK) | id_puesto (FK) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1003 | 2026-09-28 | TRANSFERENCIA | 2125.00 | 1 (Carlos Mendoza) | 98 (Puesto 98 - Tarija) |
 
-Ejemplo de la separación en 3FN:
+**Tabla `DETALLE_VENTA` (Renglones asociados al recibo 1003):**
 
-Tabla VENTA (Cabecera general):
-| id_venta (PK) | fecha | total | id_cliente (FK) | id_puesto (FK) |
-| :--- | :--- | :--- | :--- | :--- |
-| 50 | 2026-10-15 | 45.00 | 0 (Ocasional) | 1 (Pasillo Tarija) |
-
-Tabla DETALLE_VENTA (Renglones del carrito asociados a la venta anterior):
 | id_detalle (PK) | cantidad | subtotal | id_venta (FK) | id_producto (FK) |
 | :--- | :--- | :--- | :--- | :--- |
-| 1 | 2 | 30.00 | 50 | 101 (Cable) |
-| 2 | 1 | 15.00 | 50 | 105 (Funda) |
+| 3 | 1 | 2100.00 | 1003 | 104 (Samsung Galaxy A54 5G) |
+| 4 | 1 | 25.00 | 1003 | 101 (Cable Tipo C Carga Rápida 25W) |
 
-Separación del Inventario (PRODUCTO y CELULAR): Separamos los teléfonos de la tabla general para evitar campos vacíos (NULL) en los accesorios. Cada entidad maneja sus propios atributos específicos sin depender de datos ajenos.
+---
 
+## 5. Fase 2: Implementación SQL, Transacciones y Consultas Avanzadas
 
+El archivo `fase2/script_yamicell.sql` implementa la base de datos completa e incluye:
+1. **Integridad Referencial y de Dominio:** Uso de `PRAGMA foreign_keys = ON`, `ON DELETE CASCADE` y validaciones `CHECK` para sectores permitidos (`Pasillo Tarija`, `Pasillo Américas`), categorías (`Accesorios`, `Cosmética`, `Celulares`), métodos de pago (`EFECTIVO`, `QR`, `TRANSFERENCIA`) y control de valores no negativos (`precio >= 0`, `stock >= 0`).
+2. **Transacciones Atómicas (ACID):** Bloque `BEGIN ... COMMIT` que registra la venta, inserta el detalle y descuenta el inventario simultáneamente, permitiendo `ROLLBACK` ante cualquier violación de stock.
+3. **Vistas Corporativas:**
+   * `V_STOCK_CRITICO`: Alerta automática de productos con menos de 5 unidades.
+   * `V_INGRESOS_PUESTOS`: Consolidado financiero y conteo de ventas por sucursal.
+   * `V_HISTORIAL_REPARACIONES`: Reporte cruzado de clientes, puestos, fallas y estados del taller.
+4. **Consultas Avanzadas de Negocio:**
+   * Estadísticas por categoría con `COUNT`, `ROUND(AVG(), 2)`, `MIN`, `MAX` y `GROUP BY`.
+   * Reporte detallado multi-tabla con `INNER JOIN`.
+   * Filtrado de clientes frecuentes con `GROUP BY` y `HAVING`.
+   * Auditoría de mercadería sin rotación mediante `LEFT JOIN ... IS NULL` y subconsulta correlacionada `NOT EXISTS`.
+   * Funciones de ventana: Ranking del producto más vendido por categoría (`CTE` + `DENSE_RANK() OVER (PARTITION BY ...)`) y acumulado histórico de compras por cliente (`SUM() OVER (PARTITION BY ... ORDER BY ...)`).
 
-## Fase 2: Implementación
-**Archivo:** `script_yamicell.sql`
+### Ejecución Rápida del Auditor en Consola
+Para reconstruir la base de datos `yamicell_database.db` desde cero y visualizar todas las tablas, vistas y consultas avanzadas en cajas formateadas en la terminal:
 
-En la segunda fase pasamos todo a código para SQLite. En el script incluimos:
-1. Comandos de limpieza (`DROP TABLE`) para que el código se pueda ejecutar varias veces sin lanzar errores.
-2. Restricciones de seguridad (`CHECK`) para que nadie pueda registrar, por error, un producto con precio negativo.
-3. El uso de `ON DELETE CASCADE` para que no queden datos basura si un cliente es eliminado.
-
-###  avance (app.py)
-Quería comprobar si mi diseño funcionaba en la práctica y no solo en papel. Por eso, armé un script rápido en Python que se conecta a SQLite, ejecuta mi archivo SQL desde cero, le mete unos datos de prueba y me tira un reporte real de ganancias en la terminal. Así compruebo que las consultas y las Vistas responden bien.
-
-### Decisiones de Diseño en el Trabajo
-Durante el análisis del negocio, noté un detalle operativo vital: **no se le pide nombre ni teléfono a un cliente que solo compra un accesorio barato**. 
-Para que la base de datos sea rápida y no retrase las ventas de mostrador, implementé la figura del `id_cliente = 0` (Cliente Ocasional). De esta manera, el sistema permite registrar ventas menores al instante, pero mantiene la exigencia de registrar datos reales obligatorios cuando el cliente deja un equipo caro en el módulo de **Servicio Técnico**.
+`python3 app.py`
