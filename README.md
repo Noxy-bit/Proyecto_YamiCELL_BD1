@@ -54,10 +54,116 @@ traspasos_sucursal (origen/destino) ──► kardex_movimientos (auditoría inm
 | 10 | `traspasos_sucursal` | Logística origen→destino con doble FK a `sucursales` |
 | 11 | `kardex_movimientos` | Auditoría inmutable: saldo anterior → resultante |
 
-### Normalización aplicada
-* **1FN:** atributos atómicos; líneas de venta en `detalle_venta`, no en la cabecera.
-* **2FN:** en `inventario_sucursal` cada columna depende del par `id_producto + id_sucursal`; el stock de un puesto no depende solo del producto.
-* **3FN:** `categorias`, `proveedores`, `clientes` y `sucursales` son entidades independientes — ningún atributo no-clave depende de otro no-clave (ej. `tipo_cliente` no anida campos del tipo).
+### Normalización aplicada (Comparativa Antes vs. Después)
+
+#### 1. Primera Forma Normal (1FN) — Atomicidad de atributos
+Las líneas de venta se separan en `detalle_venta` para evitar múltiples valores dentro de una misma celda en la cabecera[cite: 26].
+
+<table>
+<tr>
+<th width="50%">❌ Incorrecto (Sin 1FN: valores multivaluados)</th>
+<th width="50%">✅ Correcto (En 1FN: valores atómicos en detalle_venta)</th>
+</tr>
+<tr>
+<td valign="top">
+
+| id_venta | cliente | productos_vendidos | cantidades |
+| :--- | :--- | :--- | :--- |
+| 101 | Taller TecnoFix | Pantalla A54, Malla | 1, 1 |
+| 102 | Aduana Norte | Vidrio IP11 | 4 |
+
+*Problema:* No se puede consultar ni descontar stock por ítem individual.
+
+</td>
+<td valign="top">
+
+| id_detalle | id_venta | id_producto | cantidad | precio_unitario |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | 101 | 5 (Pantalla A54) | 1 | 480.00 |
+| 2 | 101 | 12 (Malla 2mm) | 1 | 25.00 |
+| 3 | 102 | 8 (Vidrio IP11) | 4 | 28.00 |
+
+*Solución:* Cada fila contiene un solo producto y una cantidad atómica.
+
+</td>
+</tr>
+</table>
+
+#### 2. Segunda Forma Normal (2FN) — Dependencia funcional completa
+En la tabla puente `inventario_sucursal`, cada atributo depende de la llave compuesta (`id_producto` + `id_sucursal`) y no solo de una parte de ella[cite: 26].
+
+<table>
+<tr>
+<th width="50%">❌ Incorrecto (Sin 2FN: dependencia parcial)</th>
+<th width="50%">✅ Correcto (En 2FN: separación en tabla puente N:M)</th>
+</tr>
+<tr>
+<td valign="top">
+
+| id_producto (PK) | id_sucursal (PK) | nombre_producto | stock_actual |
+| :--- | :--- | :--- | :--- |
+| 5 | PUESTO-98 | Pantalla A54 | 6 |
+| 5 | PUESTO-121 | Pantalla A54 | 3 |
+
+*Problema:* `nombre_producto` depende solo de `id_producto`, repitiéndose en cada puesto.
+
+</td>
+<td valign="top">
+
+**Tabla `productos`**
+| id_producto (PK) | sku | nombre_producto |
+| :--- | :--- | :--- |
+| 5 | PAN-A54-OLED | Pantalla A54 |
+
+**Tabla `inventario_sucursal`**
+| id_producto (PK, FK) | id_sucursal (PK, FK) | stock_actual |
+| :--- | :--- | :--- |
+| 5 | PUESTO-98 | 6 |
+| 5 | PUESTO-121 | 3 |
+
+*Solución:* El stock depende del par producto + sucursal sin duplicar el catálogo.
+
+</td>
+</tr>
+</table>
+
+#### 3. Tercera Forma Normal (3FN) — Sin dependencias transitivas
+Las entidades `categorias`, `proveedores`, `clientes` y `sucursales` están separadas para que ningún atributo no-clave dependa de otro atributo no-clave[cite: 26].
+
+<table>
+<tr>
+<th width="50%">❌ Incorrecto (Sin 3FN: dependencia transitiva)</th>
+<th width="50%">✅ Correcto (En 3FN: entidades independientes)</th>
+</tr>
+<tr>
+<td valign="top">
+
+| id_producto (PK) | nombre_producto | proveedor | tel_proveedor |
+| :--- | :--- | :--- | :--- |
+| 5 | Pantalla A54 | Importadora Sur | 77011223 |
+| 9 | Cargador 45W | Importadora Sur | 77011223 |
+
+*Problema:* `tel_proveedor` depende de `proveedor` y no del producto, generando anomalías de actualización.
+
+</td>
+<td valign="top">
+
+**Tabla `productos`**
+| id_producto (PK) | nombre_producto | id_proveedor (FK) |
+| :--- | :--- | :--- |
+| 5 | Pantalla A54 | 20 |
+| 9 | Cargador 45W | 20 |
+
+**Tabla `proveedores`**
+| id_proveedor (PK) | razon_social | telefono |
+| :--- | :--- | :--- |
+| 20 | Importadora Sur | 77011223 |
+
+*Solución:* Cada atributo no-clave depende únicamente de su propia llave primaria.
+
+</td>
+</tr>
+</table>
 
 ### Objetos SQL activos
 * **3 vistas:** `vw_inventario_consolidado_puestos` (matriz pivot multi-puesto), `vw_rentabilidad_ventas_detalle` (ganancia por línea), `vw_alertas_reposicion` (stock ≤ mínimo).
