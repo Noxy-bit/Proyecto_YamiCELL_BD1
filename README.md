@@ -4,7 +4,7 @@
 | :--- | :--- |
 | **Universidad** | Universidad Autónoma Gabriel René Moreno (UAGRM) - FICCT |
 | **Materia** | Base de Datos I (INF-312) |
-| **Docente** | Ing. Juan Carlos Peinado |
+| **Docente** | Ing. MSc Juan Carlos Peinado |
 | **Estudiante** | Oscar Alejandro Nava Orihuela |
 | **Caso de Estudio** | Tienda Comercial Mixta y Taller Técnico "YamiCELL" (Puestos 98 y 121) |
 
